@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         视频发布助手
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  try to take over the world!
 // @author       You
 // @match        *://*.youtube.com/*
@@ -330,8 +330,9 @@
 
     const initWeixin = async ()=>{
         await waitUntil('wujie-app')
-        await waitUntil(".upload-content", jquery('wujie-app')[0])
-        var $label1 = jquery('wujie-app').find(".post-desc-box").parent();
+        const shadowRoot = jquery('wujie-app')[0].shadowRoot
+        await waitUntil(".upload-content", shadowRoot)
+        var $label1 = jquery(shadowRoot).find(".post-desc-box").parent();
         var $button1 = jquery("<button/>", {
             id: 'weixin-simulate-button-button',
             text: "填充",
@@ -345,7 +346,7 @@
         $label1.after($button1);
 
 
-        var $label2 = jquery('wujie-app').find(".short-title-wrap");
+        var $label2 = jquery(shadowRoot).find(".short-title-wrap");
         var $button2 = jquery("<button/>", {
             text: "填充",
             css: {
@@ -359,7 +360,7 @@
 
 
 
-        var $label3 = jquery('wujie-app').find(".post-album-wrap").parent();
+        var $label3 = jquery(shadowRoot).find(".post-album-wrap").parent();
         var $button3 = jquery("<button/>", {
             text: "填充",
             css: {
