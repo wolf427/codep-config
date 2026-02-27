@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         视频发布助手（终极稳定版，无任何DOM报错）
+// @name         视频发布助手
 // @namespace    http://tampermonkey.net/
-// @version      0.7
+// @version      0.8
 // @description  纯原生DOM+DOM加载完成执行+全量判空，解决TrustedHTML/appendChild所有报错
 // @author       You
 // @match        *://*.youtube.com/*
@@ -615,6 +615,17 @@
       try {
         if (!cssSelector || !videoUrl) throw new Error("参数为空：选择器/视频URL");
         const inputElem = document.querySelector(cssSelector);
+        await doAutoUploadVideoByUrl(inputElem, videoUrl)
+      } catch (error) {
+        showToast("视频上传失败：" + error.message);
+        console.error("自动上传失败：", error.message);
+        throw error;
+      }
+    }
+
+      // 视频URL上传（原生DOM，全量判空，安全操作）
+    async function doAutoUploadVideoByUrl(inputElem, videoUrl) {
+      try {
         if (!isDomElement(inputElem)) throw new Error("未找到文件上传框");
         if (typeof videoUrl !== "string") throw new Error("视频URL必须为字符串");
 
@@ -698,23 +709,28 @@
     };
 
     const autoUpload4Weixin = async (video) => {
-      try {
-        const uploadTip = document.querySelector("div.upload-tip");
-        if (isDomElement(uploadTip)) {
-          uploadTip.click();
-          showToast("打开微信视频号上传窗口...");
-        } else {
-          showToast("未找到上传入口，手动点击后重试");
-          return;
-        }
-        await delay(1000);
-        await chooseFile(video.videoAbsolutePath);
+//       try {
+//         const uploadTip = document.querySelector("div.upload-tip");
+//         if (isDomElement(uploadTip)) {
+//           uploadTip.click();
+//           showToast("打开微信视频号上传窗口...");
+//         } else {
+//           showToast("未找到上传入口，手动点击后重试");
+//           return;
+//         }
+//         await delay(1000);
+//         await chooseFile(video.videoAbsolutePath);
+//         currentVideo = video;
+//         showToast("微信视频号上传已触发，等待文件解析");
+//       } catch (e) {
+//         console.error("微信视频号上传失败：", e);
+//         showToast("微信视频号上传失败");
+//       }
+        const wujieApp = await waitUntil("wujie-app");
+        const shadowRoot = wujieApp.shadowRoot;
+        const inputElem = shadowRoot.querySelector('div.ant-upload input[type="file"]');
+        await doAutoUploadVideoByUrl(inputElem, video.videoUrl);
         currentVideo = video;
-        showToast("微信视频号上传已触发，等待文件解析");
-      } catch (e) {
-        console.error("微信视频号上传失败：", e);
-        showToast("微信视频号上传失败");
-      }
     };
 
     const autoUpload4Douyin = async (video) => {
