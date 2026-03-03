@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         视频发布助手
 // @namespace    http://tampermonkey.net/
-// @version      0.8
+// @version      0.9
 // @description  纯原生DOM+DOM加载完成执行+全量判空，解决TrustedHTML/appendChild所有报错
 // @author       You
 // @match        *://*.youtube.com/*
@@ -435,6 +435,14 @@
       if (!text) return showToast("填充内容为空");
       await gmPost("/robot/paste", { text });
     };
+    
+    const focusAndSimulateInputByPaste = async (element, text) => {
+      element.focus();
+      await delay(500);
+      if (!text) return showToast("填充内容为空");
+      await gmPost("/robot/paste", { text });
+      await delay(500);
+    };
 
     // 自动上传主方法（带视频判空）
     const autoUpload = (video) => {
@@ -457,38 +465,42 @@
     // 各平台初始化（原生DOM，全量判空，安全创建按钮）
     const initWeixin = async () => {
       try {
-        showToast("初始化微信视频号适配...");
+        // showToast("初始化微信视频号适配...");
+        // const wujieApp = await waitUntil("wujie-app");
+        // const shadowRoot = wujieApp.shadowRoot;
+        // if (!shadowRoot) throw new Error("未找到微信视频号shadowRoot");
+        // await waitUntil(".upload-content", shadowRoot);
+
+        // // 微信按钮创建封装（带父元素判空）
+        // const createWeixinBtn = (parentSelector, text, clickCb) => {
+        //   const parent = shadowRoot.querySelector(parentSelector);
+        //   if (!isDomElement(parent)) return;
+        //   const btn = document.createElement('button');
+        //   btn.textContent = text;
+        //   Object.assign(btn.style, {
+        //     padding: "4px 8px",
+        //     marginLeft: "10px",
+        //     cursor: "pointer",
+        //     border: "none",
+        //     borderRadius: "4px",
+        //     backgroundColor: "#1677ff",
+        //     color: "#fff",
+        //     fontSize: "12px",
+        //     verticalAlign: "middle"
+        //   });
+        //   btn.addEventListener('click', clickCb);
+        //   parent.append(btn);
+        // };
+
+        // // 创建填充按钮（带currentVideo判空）
+        // createWeixinBtn(".post-desc-box", "填充标题", async () => simulateInputAtLeft(currentVideo?.title || ""));
+        // createWeixinBtn(".short-title-wrap", "填充短标题", async () => simulateInputAtLeft(currentVideo?.pureTitle?.replace(/,/g, "") || ""));
+        // createWeixinBtn(".post-album-wrap", "选择专辑", simulateChooseAlbum4Weixin);
+        // showToast("微信视频号适配初始化完成");
         const wujieApp = await waitUntil("wujie-app");
         const shadowRoot = wujieApp.shadowRoot;
-        if (!shadowRoot) throw new Error("未找到微信视频号shadowRoot");
-        await waitUntil(".upload-content", shadowRoot);
-
-        // 微信按钮创建封装（带父元素判空）
-        const createWeixinBtn = (parentSelector, text, clickCb) => {
-          const parent = shadowRoot.querySelector(parentSelector);
-          if (!isDomElement(parent)) return;
-          const btn = document.createElement('button');
-          btn.textContent = text;
-          Object.assign(btn.style, {
-            padding: "4px 8px",
-            marginLeft: "10px",
-            cursor: "pointer",
-            border: "none",
-            borderRadius: "4px",
-            backgroundColor: "#1677ff",
-            color: "#fff",
-            fontSize: "12px",
-            verticalAlign: "middle"
-          });
-          btn.addEventListener('click', clickCb);
-          parent.after(btn);
-        };
-
-        // 创建填充按钮（带currentVideo判空）
-        createWeixinBtn(".post-desc-box", "填充标题", async () => simulateInputAtLeft(currentVideo?.title || ""));
-        createWeixinBtn(".short-title-wrap", "填充短标题", async () => simulateInputAtLeft(currentVideo?.pureTitle?.replace(/,/g, "") || ""));
-        createWeixinBtn(".post-album-wrap", "选择专辑", simulateChooseAlbum4Weixin);
-        showToast("微信视频号适配初始化完成");
+        await focusAndSimulateInputByPaste(shadowRoot.querySelector(".post-desc-box div[contenteditable]"), currentVideo?.title || "");
+        await focusAndSimulateInputByPaste(shadowRoot.querySelector(".short-title-wrap input"), currentVideo?.pureTitle?.replace(/,/g, "") || "");
       } catch (e) {
         console.error("微信视频号初始化失败：", e);
       }
@@ -496,61 +508,65 @@
 
     const initDouyin = async () => {
       try {
-        showToast("初始化抖音创作者后台适配...");
-        // 等待发布按钮加载
-        if (!document.querySelector('button:contains("发布")')) {
-          console.log('抖音发布按钮未加载，延迟初始化');
-          await delay(2000);
-        }
-        await waitUntil("span:contains('作品描述')");
+        // showToast("初始化抖音创作者后台适配...");
+        // // 等待发布按钮加载
+        // if (!document.querySelector('button:contains("发布")')) {
+        //   console.log('抖音发布按钮未加载，延迟初始化');
+        //   await delay(2000);
+        // }
+        // await waitUntil("span:contains('作品描述')");
 
-        // 标题填充按钮（带输入框判空）
+        // // 标题填充按钮（带输入框判空）
+        // const titleInput = document.querySelector("input[placeholder='填写作品标题，为作品获得更多流量']");
+        // if (isDomElement(titleInput)) {
+        //   const titleParent = titleInput.parentNode;
+        //   if (isDomElement(titleParent)) titleParent.style.position = "relative";
+        //   const titleBtn = document.createElement('button');
+        //   titleBtn.textContent = '填充';
+        //   Object.assign(titleBtn.style, {
+        //     position: "absolute",
+        //     right: "-35px",
+        //     top: "50%",
+        //     transform: "translateY(-50%)",
+        //     padding: "4px 6px",
+        //     cursor: "pointer",
+        //     border: "none",
+        //     borderRadius: "4px",
+        //     backgroundColor: "#1677ff",
+        //     color: "#fff",
+        //     fontSize: "12px"
+        //   });
+        //   titleBtn.addEventListener('click', async () => simulateInputAtLeft(currentVideo?.pureTitle || ""));
+        //   safeAppend(titleParent, titleBtn);
+        // }
+
+        // // 简介填充按钮（带容器判空）
+        // const descBox = document.querySelector("div[data-placeholder='添加作品简介']");
+        // if (isDomElement(descBox)) {
+        //   const descParent = descBox.parentNode;
+        //   if (isDomElement(descParent)) descParent.style.position = "relative";
+        //   const descBtn = document.createElement('button');
+        //   descBtn.textContent = '填充';
+        //   Object.assign(descBtn.style, {
+        //     position: "absolute",
+        //     right: "-35px",
+        //     top: "60px",
+        //     padding: "4px 6px",
+        //     cursor: "pointer",
+        //     border: "none",
+        //     borderRadius: "4px",
+        //     backgroundColor: "#1677ff",
+        //     color: "#fff",
+        //     fontSize: "12px"
+        //   });
+        //   descBtn.addEventListener('click', async () => simulateInputAtLeft(currentVideo?.tagList?.join(" ") || ""));
+        //   safeAppend(descParent, descBtn);
+        // }
+        // showToast("抖音创作者后台适配初始化完成");
         const titleInput = document.querySelector("input[placeholder='填写作品标题，为作品获得更多流量']");
-        if (isDomElement(titleInput)) {
-          const titleParent = titleInput.parentNode;
-          if (isDomElement(titleParent)) titleParent.style.position = "relative";
-          const titleBtn = document.createElement('button');
-          titleBtn.textContent = '填充';
-          Object.assign(titleBtn.style, {
-            position: "absolute",
-            right: "-35px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            padding: "4px 6px",
-            cursor: "pointer",
-            border: "none",
-            borderRadius: "4px",
-            backgroundColor: "#1677ff",
-            color: "#fff",
-            fontSize: "12px"
-          });
-          titleBtn.addEventListener('click', async () => simulateInputAtLeft(currentVideo?.pureTitle || ""));
-          safeAppend(titleParent, titleBtn);
-        }
-
-        // 简介填充按钮（带容器判空）
+        await focusAndSimulateInputByPaste(titleInput, currentVideo?.pureTitle || "");
         const descBox = document.querySelector("div[data-placeholder='添加作品简介']");
-        if (isDomElement(descBox)) {
-          const descParent = descBox.parentNode;
-          if (isDomElement(descParent)) descParent.style.position = "relative";
-          const descBtn = document.createElement('button');
-          descBtn.textContent = '填充';
-          Object.assign(descBtn.style, {
-            position: "absolute",
-            right: "-35px",
-            top: "60px",
-            padding: "4px 6px",
-            cursor: "pointer",
-            border: "none",
-            borderRadius: "4px",
-            backgroundColor: "#1677ff",
-            color: "#fff",
-            fontSize: "12px"
-          });
-          descBtn.addEventListener('click', async () => simulateInputAtLeft(currentVideo?.tagList?.join(" ") || ""));
-          safeAppend(descParent, descBtn);
-        }
-        showToast("抖音创作者后台适配初始化完成");
+        await focusAndSimulateInputByPaste(descBox, currentVideo?.tagList?.join(" ") || "");
       } catch (e) {
         console.error("抖音初始化失败：", e);
       }
@@ -731,6 +747,7 @@
         const inputElem = shadowRoot.querySelector('div.ant-upload input[type="file"]');
         await doAutoUploadVideoByUrl(inputElem, video.videoUrl);
         currentVideo = video;
+
     };
 
     const autoUpload4Douyin = async (video) => {
